@@ -4,16 +4,24 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
-../src/fork_exo.cpp \
-../src/rsleep.cpp 
+../src/Color.cpp \
+../src/Vec3D.cpp \
+../src/main.cpp 
+
+O_SRCS += \
+../src/Color.o \
+../src/Vec3D.o \
+../src/main.o 
 
 OBJS += \
-./src/fork_exo.o \
-./src/rsleep.o 
+./src/Color.o \
+./src/Vec3D.o \
+./src/main.o 
 
 CPP_DEPS += \
-./src/fork_exo.d \
-./src/rsleep.d 
+./src/Color.d \
+./src/Vec3D.d \
+./src/main.d 
 
 
 # Each subdirectory must supply rules for building sources it contributes

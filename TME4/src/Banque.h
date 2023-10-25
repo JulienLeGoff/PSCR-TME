@@ -15,5 +15,4 @@ public :
 	size_t size() const ;
 	bool comptabiliser (int attendu) const ;
 };
-
 }

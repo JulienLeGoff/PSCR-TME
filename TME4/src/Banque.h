@@ -14,5 +14,8 @@ public :
 	void transfert(size_t deb, size_t cred, unsigned int val) ;
 	size_t size() const ;
 	bool comptabiliser (int attendu) const ;
+	void transfertSur(size_t deb, size_t cred, size_t val);
+	void lock_comptes() const;
+	void unlock_comptes() const;
 };
 }

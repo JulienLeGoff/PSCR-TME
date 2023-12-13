@@ -1,23 +1,26 @@
-
+#include "List.h"
 namespace pr {
 
 // ******************* Chainon
 Chainon::Chainon (const std::string & data, Chainon * next):data(data),next(next) {};
 
+// FAUTE : len pas retourné, lenght() était appelé en boucle
 size_t Chainon::length() {
 	size_t len = 1;
 	if (next != nullptr) {
 		len += next->length();
 	}
-	return length();
+	return len;
 }
 
-void Chainon::print (std::ostream & os) {
+// FAUTE : pas de const comparativement au List.h 
+// next->print(os) était appelé en boucle
+void Chainon::print (std::ostream & os) const {
 	os << data ;
 	if (next != nullptr) {
 		os << ", ";
+		next->print(os);
 	}
-	next->print(os);
 }
 
 // ******************  List
@@ -45,7 +48,8 @@ void List::push_front (const std::string& val) {
 	tete = new Chainon(val,tete);
 }
 
-bool empty() {
+// FAUTE : besoin de List::empty() et pas de empty()
+bool List::empty() {
 	return tete == nullptr;
 }
 
@@ -57,8 +61,7 @@ size_t List::size() const {
 	}
 }
 
-} // namespace pr
-
+// FAUTE : en dehors de la classe
 std::ostream & operator<< (std::ostream & os, const pr::List & vec)
 {
 	os << "[";
@@ -69,3 +72,4 @@ std::ostream & operator<< (std::ostream & os, const pr::List & vec)
 	return os;
 }
 
+} // namespace pr

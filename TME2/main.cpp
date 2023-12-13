@@ -2,6 +2,10 @@
 #include <fstream>
 #include <regex>
 #include <chrono>
+#include <vector>
+#include <string>
+
+#include "HashMap.hpp"
 
 bool contient(std::vector<std::string> l, std::string mot){
 	for(std::string m : l){
@@ -13,6 +17,7 @@ bool contient(std::vector<std::string> l, std::string mot){
 }
 
 int main () {
+	using namespace pr;
 	using namespace std;
 	using namespace std::chrono;
 
@@ -30,11 +35,21 @@ int main () {
 	//vector<string> motsDiff = {};
 	vector<pair<string,int>> motsDiff = {};
 
+	HashMap<string,int> motsDiff2(10);
+
 	while (input >> word) {
 		// élimine la ponctuation et les caractères spéciaux
 		word = regex_replace ( word, re, "");
 		// passe en lowercase
 		transform(word.begin(),word.end(),word.begin(),::tolower);
+
+		
+
+		// word est maintenant "tout propre"
+		if (nombre_lu % 100 == 0)
+			// on affiche un mot "propre" sur 100
+			cout << nombre_lu << ": "<< word << endl;
+		
 
 		/*if(!contient(motsDiff, word)){
 			motsDiff.emplace_back(word);
@@ -50,13 +65,15 @@ int main () {
 		}
 		if(!trouve){
 			motsDiff.emplace_back(word,0);
+			++nombre_lu;
 		}
 
-		// word est maintenant "tout propre"
-		if (nombre_lu % 100 == 0)
-			// on affiche un mot "propre" sur 100
-			cout << nombre_lu << ": "<< word << endl;
-		nombre_lu++;
+		int *taille = motsDiff2.get(word);
+
+		if(taille == nullptr)
+			motsDiff2.put(word, 1);
+		else
+			motsDiff2.put(word, (*taille)+1);
 	}
 	input.close();
 

@@ -18,6 +18,7 @@ class Barrier {
 
 public:
 	Barrier(int max): max_(max), counter(0) {}
+
 	void done(){
 		std::unique_lock<std::mutex> ul(m);
 		counter++;
@@ -25,13 +26,13 @@ public:
 			cv.notify_all();
 		}
 	}
+
 	void waitFor(){
 		std::unique_lock<std::mutex> ul(m);
 		while(counter != max_){
 			cv.wait(ul);
 		}
 	}
+
 	virtual ~Barrier();
 };
-
-#endif /* SRC_BARRIER_H_ */

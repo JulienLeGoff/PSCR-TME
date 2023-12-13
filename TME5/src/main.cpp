@@ -1,11 +1,18 @@
 #include "Vec3D.h"
 #include "Rayon.h"
 #include "Scene.h"
+#include "Pool.h"
+#include "Barrier.h"
+#include "Job.h"
+
 #include <iostream>
 #include <algorithm>
 #include <fstream>
 #include <limits>
 #include <random>
+
+#define TAILLEQUEUE 1000
+#define NBTHREAD 1
 
 using namespace std;
 using namespace pr;
@@ -98,6 +105,51 @@ void exportImage(const char * path, size_t width, size_t height, Color * pixels)
 	img.close();
 }
 
+class DrawJobBarrier : public Job {
+	int foo (int v){
+		this_thread::sleep_for(1s);
+		return v % 255;
+	}
+
+	const Vec3D &screenPoint;
+	Color &pixel;
+	const Scene &scene;
+	const vector<Vec3D> &lights;
+	Barrier &barrier;
+
+	public:
+		DrawJobBarrier(const Vec3D &screenPoint, Color &pixel, const Scene &scene, const vector<Vec3D> &lights, Barrier &barrier) : screenPoint(screenPoint), pixel(pixel), scene(scene), lights(lights), barrier(barrier) {}
+
+		void run() {
+			Rayon  ray(scene.getCameraPos(), screenPoint);
+			Color finalcolor;
+			auto minz = std::numeric_limits<float>::max();
+
+			for(const auto & obj : scene){
+				auto zinter = obj.intersects(ray);
+				if (zinter < minz) {
+					minz = zinter;
+					finalcolor = obj.getColor();
+					auto camera = scene.getCameraPos();
+					Vec3D rayInter = (ray.dest - ray.ori).normalize() * zinter;
+					Vec3D intersection = rayInter + camera;
+					Vec3D normal = obj.getNormale(intersection);
+					double dt = 0;
+					for (const auto & light : lights) {
+						Vec3D tolight = (light - intersection);
+						if (obj.intersects(Rayon(light,intersection)) >= tolight.length() - 0.05 ) {   //  epsilon 0.05 for double issues
+							dt += tolight.normalize() & normal ; // l'angle (scalaire) donne la puissance de la lumiere reflechie
+						}
+					}
+					finalcolor = finalcolor * dt + finalcolor * 0.2; // *0.2 = lumiere speculaire ambiante
+				}
+			}
+			pixel = finalcolor;
+			barrier.done();
+		}
+		~DrawJobBarrier(){}
+};
+
 // NB : en francais pour le cours, preferez coder en english toujours.
 // pas d'accents pour eviter les soucis d'encodage
 
@@ -125,6 +177,14 @@ int main () {
 	// Les couleurs des pixels dans l'image finale
 	Color * pixels = new Color[scene.getWidth() * scene.getHeight()];
 
+	const int NBJOB = scene.getWidth() * scene.getHeight();
+
+	Pool pool(15); // taille queue
+	vector<int> results(NBJOB);
+	pool.start(NBTHREAD);
+	Barrier b(NBJOB);
+
+
 	// pour chaque pixel, calculer sa couleur
 	for (int x =0 ; x < scene.getWidth() ; x++) {
 		for (int  y = 0 ; y < scene.getHeight() ; y++) {
@@ -150,10 +210,12 @@ int main () {
 
 
 			//pool.submit((job *) new myJob);
-			}
-
+			pool.submit(new DrawJobBarrier(screen[y][x], pixels[y*scene.getHeight() + x], scene, lights, b));
 		}
+
 	}
+	b.waitFor();
+	pool.stop();
 
 	std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 	    std::cout << "Total time "
